@@ -47,12 +47,17 @@ If a component repo is ever made **private**, create a fine-grained personal acc
 
 ### Triggers
 
-| Trigger | Version | Notes |
+Every **successful** build, except a pull request, is published automatically as a GitHub Release with the MSI (`ComponentSuite-<version>.msi`) attached and a table of component versions as release notes. The tag `v<version>` is created for you, so there's no need to tag by hand. If any step fails, nothing is released.
+
+| Trigger | Version | Released? |
 |---|---|---|
-| push / pull request to `main` | `1.0.<run number>` | |
-| tag `v1.2.3` | `1.2.3` | also attaches the MSI to a GitHub Release |
-| **Run workflow** (manual) | input, or `1.0.<run number>` | `allow_missing` builds without components that have no release |
-| `repository_dispatch` `component-built` | `1.0.<run number>` | lets a component repo trigger a rebuild after it releases |
+| push to `main` | `1.1.<run number>` | yes, tag `v1.1.<run number>` is created |
+| pull request to `main` | `1.1.<run number>` | no, build only |
+| tag `v1.2.3` pushed by hand | `1.2.3` | yes, under that tag |
+| **Run workflow** (manual) | input, or `1.1.<run number>` | yes. With `allow_missing` ticked and a component left out, it's marked as a pre-release |
+| `repository_dispatch` `component-built` | `1.1.<run number>` | yes. Lets a component repo trigger a rebuild after it releases |
+
+Versions always go up with the run number, so each MSI upgrades the previous install. To move to a new major/minor version, change `VERSION_PREFIX` at the top of `.github/workflows/build-msi.yml`, e.g. to `"2.0"`. Pipeline artifacts are also uploaded for every run, pull requests included, and are kept for 90 days.
 
 To rebuild the MSI automatically whenever a component publishes a release, add a step like this after the release step in that component's workflow. It needs a token there with **Contents: write** on this repo:
 

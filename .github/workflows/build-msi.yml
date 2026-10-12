@@ -6,6 +6,15 @@ name: Build MSI
 #
 # No secrets needed while the component repos are public: release assets are
 # public, and the workflow's own token is only used for a higher API rate limit.
+#
+# Every build except a pull request also publishes the MSI as a GitHub Release,
+# tagged v<version> automatically - no manual tagging needed. Versions are
+# <VERSION_PREFIX>.<run number>, so each build is newer than the last and
+# upgrades over the previous install. Pushing a v*.*.* tag yourself still works
+# and releases exactly that version.
+
+env:
+  VERSION_PREFIX: "1.1"   # major.minor of automatic versions; bump for e.g. 2.0
 
 on:
   push:
@@ -16,7 +25,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Product version (major.minor.build). Default: 1.0.<run number>"
+        description: "Product version (major.minor.build). Default: VERSION_PREFIX.<run number>"
         required: false
       allow_missing:
         description: "Leave out components that have no release yet instead of failing"
@@ -31,7 +40,7 @@ jobs:
   msi:
     runs-on: windows-2022
     permissions:
-      contents: write   # only used to attach the MSI to a GitHub Release on tags
+      contents: write   # create the tag + GitHub Release for each build
 
     steps:
       - name: Checkout
@@ -43,7 +52,8 @@ jobs:
         run: |
           $v = '${{ github.event.inputs.version }}'
           if (-not $v -and '${{ github.ref_type }}' -eq 'tag') { $v = '${{ github.ref_name }}'.TrimStart('v') }
-          if (-not $v) { $v = "1.0.${{ github.run_number }}" }
+          if (-not $v) { $v = "$env:VERSION_PREFIX.${{ github.run_number }}" }
+          if ($v -notmatch '^\d+\.\d+\.\d+$') { Write-Error "Version '$v' must be major.minor.build (numbers only)"; exit 1 }
           "version=$v" >> $env:GITHUB_OUTPUT
 
       - name: Fetch component releases
@@ -56,31 +66,54 @@ jobs:
         shell: pwsh
         run: ./build.ps1 -SkipFetch -Version ${{ steps.ver.outputs.version }}
 
+      # Component table for the run summary, reused as the release notes.
       - name: Summary
+        id: summary
         shell: pwsh
         run: |
           $info = Get-Content out/staging/build-info.json -Raw | ConvertFrom-Json
           $lines = @("### ComponentSuite ${{ steps.ver.outputs.version }}", '', '| Component | Repo | Release | Commit |', '|---|---|---|---|')
           foreach ($p in $info.components.PSObject.Properties) {
             $c = $p.Value
-            $commit = if ($c.commit) { "``$($c.commit.Substring(0,7))``" } else { '-' }
-            $lines += "| $($p.Name) | $($c.repo) | [$($c.tag)]($($c.releaseUrl)) | $commit |"
+            $commit  = if ($c.PSObject.Properties['commit'] -and $c.commit) { "``$($c.commit.Substring(0,7))``" } else { '-' }
+            $release = if ($c.PSObject.Properties['tag'] -and $c.tag) { "[$($c.tag)]($($c.releaseUrl))" } else { '-' }
+            $lines += "| $($p.Name) | $($c.repo) | $release | $commit |"
           }
-          if ($info.PSObject.Properties['missing']) { $lines += '', "**Left out:** $($info.missing -join ', ')" }
+          $missing = $info.PSObject.Properties['missing'] -and $info.missing
+          if ($missing) { $lines += '', "**Left out:** $($info.missing -join ', ')" }
           $lines -join "`n" >> $env:GITHUB_STEP_SUMMARY
+          $lines -join "`n" | Set-Content out/release-notes.md -Encoding utf8
+          "missing=$(if ($missing) { 'true' } else { 'false' })" >> $env:GITHUB_OUTPUT
+
+      # Versioned file name, so downloads from different releases don't collide.
+      - name: Name MSI
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force out/release | Out-Null
+          Copy-Item out/msi/ComponentSuite.msi "out/release/ComponentSuite-${{ steps.ver.outputs.version }}.msi"
 
       - name: Upload MSI
         uses: actions/upload-artifact@v7
         with:
           name: ComponentSuite-${{ steps.ver.outputs.version }}
           path: |
-            out/msi/*.msi
+            out/release/*.msi
             out/staging/build-info.json
           if-no-files-found: error
 
-      - name: Attach to GitHub Release
-        if: github.ref_type == 'tag'
+      # Runs only when every step above succeeded (fetch, MSI build, upload).
+      # Pull requests only build. Everything else becomes a release: a pushed
+      # v*.*.* tag releases under that tag; otherwise tag v<version> is created
+      # on the commit that was built. A build that left components out (manual
+      # run with allow_missing) is marked as a pre-release so it never becomes
+      # "latest".
+      - name: Publish GitHub Release
+        if: success() && github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v2
         with:
-          files: out/msi/*.msi
-          generate_release_notes: true
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.ver.outputs.version) }}
+          target_commitish: ${{ github.sha }}
+          name: ComponentSuite ${{ steps.ver.outputs.version }}
+          body_path: out/release-notes.md
+          files: out/release/*.msi
+          prerelease: ${{ steps.summary.outputs.missing == 'true' }}
