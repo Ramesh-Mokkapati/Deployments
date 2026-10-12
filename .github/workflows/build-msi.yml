@@ -12,6 +12,9 @@ name: Build MSI
 # <VERSION_PREFIX>.<run number>, so each build is newer than the last and
 # upgrades over the previous install. Pushing a v*.*.* tag yourself still works
 # and releases exactly that version.
+#
+# A daily scheduled run rebuilds only when a component has published a release
+# that the newest MSI doesn't contain yet; otherwise it stops after the check.
 
 env:
   VERSION_PREFIX: "1.1"   # major.minor of automatic versions; bump for e.g. 2.0
@@ -35,9 +38,39 @@ on:
   #   gh api repos/<owner>/<this-repo>/dispatches -f event_type=component-built
   repository_dispatch:
     types: [component-built]
+  # Daily at 06:00 UTC: build only if a component released something new.
+  schedule:
+    - cron: "0 6 * * *"
 
 jobs:
+  # Scheduled runs: compare each component's current release with the newest
+  # MSI release. Every other trigger always builds.
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Look for new component releases
+        id: check
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          if ('${{ github.event_name }}' -ne 'schedule') {
+            Write-Host 'Not a scheduled run - always building.'
+            'changed=true' >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+          ./scripts/Test-ComponentUpdates.ps1 | Out-Null
+
   msi:
+    needs: check
+    if: needs.check.outputs.changed == 'true'
     runs-on: windows-2022
     permissions:
       contents: write   # create the tag + GitHub Release for each build

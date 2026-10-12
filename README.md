@@ -30,6 +30,7 @@ Each repo's **latest release** is used. That is GitHub's "latest", which skips d
 artifacts.json                    which release zip/files to take from each repo
 build.ps1                         local entry point (fetch + build)
 scripts/Fetch-Artifacts.ps1       downloads + stages release zips into out/staging/
+scripts/Test-ComponentUpdates.ps1 scheduled runs: has any component released since the newest MSI?
 scripts/New-InstallerImages.ps1   regenerates installer/assets/ artwork
 installer/ComponentSuite.wixproj  WiX SDK project (built with `dotnet build`)
 installer/Package.wxs             product, features, shortcuts, custom actions
@@ -56,6 +57,13 @@ Every **successful** build, except a pull request, is published automatically as
 | tag `v1.2.3` pushed by hand | `1.2.3` | yes, under that tag |
 | **Run workflow** (manual) | input, or `1.1.<run number>` | yes. With `allow_missing` ticked and a component left out, it's marked as a pre-release |
 | `repository_dispatch` `component-built` | `1.1.<run number>` | yes. Lets a component repo trigger a rebuild after it releases |
+| **daily schedule**, 06:00 UTC | `1.1.<run number>` | only if a component has a newer release than the newest MSI contains |
+
+### Daily scheduled check
+
+Component repos release on their own whenever they're pushed to `main`, and this repo picks those releases up automatically once a day. A small `check` job (`scripts/Test-ComponentUpdates.ps1`) reads the component tags listed in the newest ComponentSuite release's notes and compares them with each component's current release (or its pinned `tag` in `artifacts.json`). The MSI is built and released only if something changed, or if no ComponentSuite release exists yet. On quiet days the run stops after the check, and its summary shows the comparison table. For a new MSI straight away, use **Run workflow**.
+
+GitHub pauses scheduled workflows in a public repository after 60 days without any commits. It emails a warning first, and you can turn the schedule back on from the Actions tab. Scheduled runs can also start a little later than 06:00 when GitHub is busy.
 
 Versions always go up with the run number, so each MSI upgrades the previous install. To move to a new major/minor version, change `VERSION_PREFIX` at the top of `.github/workflows/build-msi.yml`, e.g. to `"2.0"`. Pipeline artifacts are also uploaded for every run, pull requests included, and are kept for 90 days.
 
