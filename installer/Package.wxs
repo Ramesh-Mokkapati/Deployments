@@ -1,0 +1,209 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+
+  <!-- ProductName, Manufacturer, ProductVersion and StagingDir come from ComponentSuite.wixproj. -->
+
+  <!-- UpgradeCode identifies this product line across versions - never change it. -->
+  <Package Name="$(ProductName)"
+           Manufacturer="$(Manufacturer)"
+           Version="$(ProductVersion)"
+           UpgradeCode="DBA912DE-65A6-43B2-ADC9-A6D26BC0292D"
+           Scope="perMachine"
+           Compressed="yes">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <!-- Artwork: regenerate with scripts\New-InstallerImages.ps1 -->
+    <Icon Id="ProductIcon" SourceFile="assets\ComponentSuite.ico" />
+    <Property Id="ARPPRODUCTICON" Value="ProductIcon" />
+    <WixVariable Id="WixUIBannerBmp" Value="assets\Banner.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="assets\Dialog.bmp" />
+
+    <util:QueryWindowsWellKnownSIDs />
+
+    <!-- Almost everything is built with /MD, so the VC++ 2015-2022 runtime must be present. -->
+    <Property Id="VCRT_X64">
+      <RegistrySearch Root="HKLM" Key="SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64"
+                      Name="Installed" Type="raw" Bitness="always64" />
+    </Property>
+    <Property Id="VCRT_X86">
+      <RegistrySearch Root="HKLM" Key="SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86"
+                      Name="Installed" Type="raw" Bitness="always32" />
+    </Property>
+    <Launch Condition="Installed OR VCRT_X64 = &quot;#1&quot;"
+            Message="[ProductName] requires the Microsoft Visual C++ 2015-2022 Redistributable (x64). Install it from https://aka.ms/vs/17/release/vc_redist.x64.exe and run this setup again." />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="ManufacturerDir" Name="$(Manufacturer)">
+        <Directory Id="INSTALLFOLDER" Name="$(ProductName)">
+          <Directory Id="AppFrameworkDir" Name="Application-Framework" />
+          <Directory Id="AzureIoTDir" Name="Azure-IoT-Samples" />
+          <Directory Id="DiskForgeDir" Name="DiskForge" />
+          <Directory Id="LocalisationDir" Name="Localisation" />
+          <Directory Id="MessagingDir" Name="Messaging" />
+          <Directory Id="MfcSqLiteDir" Name="MfcSqLite" />
+          <Directory Id="PortingDir" Name="Porting" />
+          <Directory Id="UpdateManagersDir" Name="UpdateManagers" />
+        </Directory>
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ProgramMenuDir" Name="$(ProductName)" />
+    </StandardDirectory>
+
+    <Feature Id="Complete" Title="$(ProductName)" Description="All components."
+             Display="expand" ConfigurableDirectory="INSTALLFOLDER" AllowAbsent="no">
+
+      <!-- Which CI run / commit each component came from. -->
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(StagingDir)build-info.json" />
+      </Component>
+      <Component Id="ProgramMenuDirCleanup" Directory="ProgramMenuDir" Guid="81E8D0E8-BBCA-4759-A6EB-EAA11E84BA38">
+        <RemoveFolder Id="RemoveProgramMenuDir" On="uninstall" />
+        <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)" Name="InstallDir"
+                       Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
+      </Component>
+
+<?ifdef HasAppFramework ?>
+      <Feature Id="FeatureAppFramework" Title="Application Framework" Description="FeatureTour, SingleInstance and NetworkAdapters samples.">
+        <Files Include="$(StagingDir)AppFramework\**" Directory="AppFrameworkDir" />
+        <!-- FeatureTour writes FeatureTour.log next to the exe. -->
+        <ComponentRef Id="AppFrameworkWritable" />
+      </Feature>
+<?endif?>
+
+<?ifdef HasAzureIoT ?>
+      <Feature Id="FeatureAzureIoT" Title="Azure IoT samples" Description="IoT Hub telemetry, C2D, blob upload and SAS upload samples.">
+        <Files Include="$(StagingDir)AzureIoT\**" Directory="AzureIoTDir" />
+      </Feature>
+<?endif?>
+
+<?ifdef HasDiskForge ?>
+      <Feature Id="FeatureDiskForge" Title="DiskForge" Description="Disk utility.">
+        <Files Include="$(StagingDir)DiskForge\**" Directory="DiskForgeDir" />
+        <Component Directory="ProgramMenuDir">
+          <Shortcut Id="DiskForgeShortcut" Name="DiskForge" Target="[DiskForgeDir]DiskForge.exe" WorkingDirectory="DiskForgeDir" />
+          <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="DiskForge" Type="integer" Value="1" KeyPath="yes" />
+        </Component>
+      </Feature>
+<?endif?>
+
+<?ifdef HasLocalisation ?>
+      <Feature Id="FeatureLocalisation" Title="Localisation" Description="CommandLine, SDI and dialog apps with English/French/German resource DLLs.">
+        <Files Include="$(StagingDir)Localisation\**" Directory="LocalisationDir" />
+        <Component Directory="ProgramMenuDir">
+          <Shortcut Id="SDIAppShortcut" Name="Localisation SDI App" Target="[LocalisationDir]SDIApp.exe" WorkingDirectory="LocalisationDir" />
+          <Shortcut Id="DialogAppShortcut" Name="Localisation Dialog App" Target="[LocalisationDir]DialogApp.exe" WorkingDirectory="LocalisationDir" />
+          <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="Localisation" Type="integer" Value="1" KeyPath="yes" />
+        </Component>
+      </Feature>
+<?endif?>
+
+<?ifdef HasMessaging ?>
+      <Feature Id="FeatureMessaging" Title="Messaging" Description="MQTT, RabbitMQ and OpenDDS publisher/subscriber samples with their runtime DLLs.">
+        <Files Include="$(StagingDir)Messaging\**" Directory="MessagingDir" />
+      </Feature>
+<?endif?>
+
+<?ifdef HasMfcSqLite ?>
+      <Feature Id="FeatureMfcSqLite" Title="MFC SQLite demo" Description="MFC dialog app using the LibSQLLite ORM.">
+        <Files Include="$(StagingDir)MfcSqLite\**" Directory="MfcSqLiteDir" />
+        <!-- The app creates mfc_app_multitable.db next to the exe. -->
+        <ComponentRef Id="MfcSqLiteWritable" />
+        <Component Directory="ProgramMenuDir">
+          <Shortcut Id="MfcSqLiteShortcut" Name="MFC SQLite Demo" Target="[MfcSqLiteDir]MfcSqliteApp.exe" WorkingDirectory="MfcSqLiteDir" />
+          <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="MfcSqLite" Type="integer" Value="1" KeyPath="yes" />
+        </Component>
+      </Feature>
+<?endif?>
+
+<?ifdef HasPorting ?>
+      <Feature Id="FeaturePorting" Title="Porting tools" Description="PortAssist, Genie and the 32-to-64-bit COM bridge sample (needs the x86 VC++ runtime too).">
+        <Files Include="$(StagingDir)Porting\**" Directory="PortingDir" />
+        <Component Directory="ProgramMenuDir">
+          <Shortcut Id="PortAssistShortcut" Name="PortAssist" Target="[PortingDir]x64\PortAssist.exe" WorkingDirectory="PortingDir" />
+          <Shortcut Id="GenieShortcut" Name="Genie" Target="[PortingDir]x86\Genie.exe" WorkingDirectory="PortingDir" />
+          <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="Porting" Type="integer" Value="1" KeyPath="yes" />
+        </Component>
+      </Feature>
+<?endif?>
+
+<?ifdef HasUpdateManagers ?>
+      <Feature Id="FeatureUpdateManagers" Title="Update Managers" Description="UpdateManager-Push and UpdateManager-Pull.">
+        <Files Include="$(StagingDir)UpdateManagers\**" Directory="UpdateManagersDir" />
+      </Feature>
+<?endif?>
+    </Feature>
+
+    <ui:WixUI Id="WixUI_FeatureTree" InstallDirectory="INSTALLFOLDER" />
+    <UI>
+      <!-- Skip the license page on first install: Welcome -> Customize. -->
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="CustomizeDlg" Order="99" Condition="NOT Installed" />
+      <Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="99" Condition="NOT Installed" />
+    </UI>
+
+<?ifdef HasPorting ?>
+    <!-- Pulls in the Porting fragment (COM registration + x86 runtime check) below. -->
+    <CustomActionRef Id="RequireX86Runtime" />
+<?endif?>
+  </Package>
+
+  <!-- Give Users modify rights on the folders whose apps write next to their exe. -->
+  <Fragment>
+    <Component Id="AppFrameworkWritable" Directory="AppFrameworkDir" Guid="4743F1B0-3FAE-4DAE-BE7B-8F153446E682">
+      <CreateFolder>
+        <util:PermissionEx User="[WIX_ACCOUNT_USERS]" GenericRead="yes" GenericWrite="yes" GenericExecute="yes" Delete="yes" />
+      </CreateFolder>
+    </Component>
+  </Fragment>
+  <Fragment>
+    <Component Id="MfcSqLiteWritable" Directory="MfcSqLiteDir" Guid="AE67C692-F53D-4291-8520-82EF196B7E55">
+      <CreateFolder>
+        <util:PermissionEx User="[WIX_ACCOUNT_USERS]" GenericRead="yes" GenericWrite="yes" GenericExecute="yes" Delete="yes" />
+      </CreateFolder>
+    </Component>
+  </Fragment>
+
+<?ifdef HasPorting ?>
+  <!-- The Porting COM bridge: 64-bit ClientModified.exe talks to the 32-bit Server.dll
+       through the out-of-proc COMServer.exe, which has to be registered. -->
+  <Fragment>
+    <SetProperty Id="RegisterComServer" Before="RegisterComServer" Sequence="execute"
+                 Value="&quot;[PortingDir]x86\COMServer.exe&quot; /RegServer" />
+    <CustomAction Id="RegisterComServer" BinaryRef="Wix4UtilCA_X64" DllEntry="WixQuietExec64"
+                  Execute="deferred" Impersonate="no" Return="ignore" />
+
+    <SetProperty Id="RegisterComProxy" Before="RegisterComProxy" Sequence="execute"
+                 Value="&quot;[SystemFolder]regsvr32.exe&quot; /s &quot;[PortingDir]x86\COMServerPS.dll&quot;" />
+    <CustomAction Id="RegisterComProxy" BinaryRef="Wix4UtilCA_X64" DllEntry="WixQuietExec64"
+                  Execute="deferred" Impersonate="no" Return="ignore" />
+
+    <SetProperty Id="UnregisterComProxy" Before="UnregisterComProxy" Sequence="execute"
+                 Value="&quot;[SystemFolder]regsvr32.exe&quot; /s /u &quot;[PortingDir]x86\COMServerPS.dll&quot;" />
+    <CustomAction Id="UnregisterComProxy" BinaryRef="Wix4UtilCA_X64" DllEntry="WixQuietExec64"
+                  Execute="deferred" Impersonate="no" Return="ignore" />
+
+    <SetProperty Id="UnregisterComServer" Before="UnregisterComServer" Sequence="execute"
+                 Value="&quot;[PortingDir]x86\COMServer.exe&quot; /UnregServer" />
+    <CustomAction Id="UnregisterComServer" BinaryRef="Wix4UtilCA_X64" DllEntry="WixQuietExec64"
+                  Execute="deferred" Impersonate="no" Return="ignore" />
+
+    <CustomAction Id="RequireX86Runtime" Error="The Porting tools include 32-bit programs that need the Microsoft Visual C++ 2015-2022 Redistributable (x86). Install it from https://aka.ms/vs/17/release/vc_redist.x86.exe, or deselect the Porting tools feature." />
+
+    <InstallExecuteSequence>
+      <Custom Action="RequireX86Runtime" After="CostFinalize"
+              Condition="&amp;FeaturePorting = 3 AND NOT (VCRT_X86 = &quot;#1&quot;)" />
+      <Custom Action="UnregisterComProxy" Before="RemoveFiles"
+              Condition="!FeaturePorting = 3 AND &amp;FeaturePorting = 2" />
+      <Custom Action="UnregisterComServer" After="UnregisterComProxy"
+              Condition="!FeaturePorting = 3 AND &amp;FeaturePorting = 2" />
+      <Custom Action="RegisterComServer" After="InstallFiles"
+              Condition="&amp;FeaturePorting = 3" />
+      <Custom Action="RegisterComProxy" After="RegisterComServer"
+              Condition="&amp;FeaturePorting = 3" />
+    </InstallExecuteSequence>
+  </Fragment>
+<?endif?>
+</Wix>

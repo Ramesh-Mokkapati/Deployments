@@ -1,0 +1,45 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+  <!--
+    Builds the MSI from the files Fetch-Artifacts.ps1 staged in out\staging\.
+      dotnet build installer\ComponentSuite.wixproj -c Release -p:ProductVersion=1.2.3
+    Product name / manufacturer can be overridden the same way:
+      -p:ProductName="My Tools" -p:Manufacturer="My Company"
+    A component folder that isn't staged (fetched with -AllowMissing) drops its feature.
+  -->
+  <PropertyGroup>
+    <OutputName>ComponentSuite</OutputName>
+    <InstallerPlatform>x64</InstallerPlatform>
+    <!-- Per-machine package: ProgramMenuFolder is the all-users menu, so HKLM key paths
+         on the shortcut components are correct. These ICEs assume a per-user install. -->
+    <SuppressIces>ICE38;ICE43;ICE57</SuppressIces>
+    <ProductName Condition="'$(ProductName)' == ''">Component Suite</ProductName>
+    <Manufacturer Condition="'$(Manufacturer)' == ''">Ramesh Mokkapati</Manufacturer>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">1.0.0</ProductVersion>
+    <StagingDir Condition="'$(StagingDir)' == ''">$(MSBuildThisFileDirectory)..\out\staging</StagingDir>
+    <StagingDir>$([System.IO.Path]::GetFullPath('$(StagingDir)'))</StagingDir>
+    <StagingDir>$([MSBuild]::EnsureTrailingSlash('$(StagingDir)'))</StagingDir>
+    <DefineConstants>$(DefineConstants);ProductName=$(ProductName);Manufacturer=$(Manufacturer);ProductVersion=$(ProductVersion);StagingDir=$(StagingDir)</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <StagedComponent Include="AppFramework;AzureIoT;DiskForge;Localisation;Messaging;MfcSqLite;Porting;UpdateManagers" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
+    <PackageReference Include="WixToolset.Util.wixext" Version="5.0.2" />
+  </ItemGroup>
+
+  <Target Name="DefineStagedComponents" BeforeTargets="CoreCompile">
+    <Error Condition="!Exists('$(StagingDir)build-info.json')"
+           Text="Nothing staged in $(StagingDir). Run scripts\Fetch-Artifacts.ps1 (or build.ps1) first." />
+    <ItemGroup>
+      <_Present Include="@(StagedComponent)" Condition="Exists('$(StagingDir)%(Identity)')" />
+      <_Absent Include="@(StagedComponent)" Exclude="@(_Present)" />
+    </ItemGroup>
+    <Warning Condition="'@(_Absent)' != ''" Text="Not staged, feature left out of the MSI: @(_Absent)" />
+    <PropertyGroup>
+      <DefineConstants>$(DefineConstants);@(_Present->'Has%(Identity)=1')</DefineConstants>
+    </PropertyGroup>
+  </Target>
+</Project>

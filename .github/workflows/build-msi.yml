@@ -1,0 +1,86 @@
+name: Build MSI
+
+# Downloads the latest GitHub Release (<Repo>-<tag>-x64.zip) of each component
+# repo listed in artifacts.json and packages them into a single MSI, published
+# as this run's "ComponentSuite-<version>" artifact.
+#
+# No secrets needed while the component repos are public: release assets are
+# public, and the workflow's own token is only used for a higher API rate limit.
+
+on:
+  push:
+    branches: ["main", "master"]
+    tags: ["v*.*.*"]
+  pull_request:
+    branches: ["main", "master"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Product version (major.minor.build). Default: 1.0.<run number>"
+        required: false
+      allow_missing:
+        description: "Leave out components that have no release yet instead of failing"
+        type: boolean
+        default: false
+  # Lets a component repo trigger a rebuild after it publishes a release:
+  #   gh api repos/<owner>/<this-repo>/dispatches -f event_type=component-built
+  repository_dispatch:
+    types: [component-built]
+
+jobs:
+  msi:
+    runs-on: windows-2022
+    permissions:
+      contents: write   # only used to attach the MSI to a GitHub Release on tags
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Work out version
+        id: ver
+        shell: pwsh
+        run: |
+          $v = '${{ github.event.inputs.version }}'
+          if (-not $v -and '${{ github.ref_type }}' -eq 'tag') { $v = '${{ github.ref_name }}'.TrimStart('v') }
+          if (-not $v) { $v = "1.0.${{ github.run_number }}" }
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Fetch component releases
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./scripts/Fetch-Artifacts.ps1 -AllowMissing:$${{ github.event.inputs.allow_missing == 'true' }}
+
+      - name: Build MSI
+        shell: pwsh
+        run: ./build.ps1 -SkipFetch -Version ${{ steps.ver.outputs.version }}
+
+      - name: Summary
+        shell: pwsh
+        run: |
+          $info = Get-Content out/staging/build-info.json -Raw | ConvertFrom-Json
+          $lines = @("### ComponentSuite ${{ steps.ver.outputs.version }}", '', '| Component | Repo | Release | Commit |', '|---|---|---|---|')
+          foreach ($p in $info.components.PSObject.Properties) {
+            $c = $p.Value
+            $commit = if ($c.commit) { "``$($c.commit.Substring(0,7))``" } else { '-' }
+            $lines += "| $($p.Name) | $($c.repo) | [$($c.tag)]($($c.releaseUrl)) | $commit |"
+          }
+          if ($info.PSObject.Properties['missing']) { $lines += '', "**Left out:** $($info.missing -join ', ')" }
+          $lines -join "`n" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload MSI
+        uses: actions/upload-artifact@v7
+        with:
+          name: ComponentSuite-${{ steps.ver.outputs.version }}
+          path: |
+            out/msi/*.msi
+            out/staging/build-info.json
+          if-no-files-found: error
+
+      - name: Attach to GitHub Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: out/msi/*.msi
+          generate_release_notes: true

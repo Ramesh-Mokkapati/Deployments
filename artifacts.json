@@ -1,0 +1,73 @@
+{
+  "$comment": "Which GitHub Release asset to take from each repo, and where its files land under out/staging/<id>/. By default the repo's latest release (drafts and pre-releases excluded) is used; set 'tag' on a component to pin it, e.g. \"tag\": \"v1.2.0\". 'asset' is the zip name, with {repo} and {tag} filled in. In 'files', 'from' is a glob relative to the zip root (* = one path segment, ** = any depth); 'to' ending in '/' (or empty) is a folder, otherwise the single match is renamed to that file name; 'keepTree' keeps the sub-path below the glob's fixed prefix instead of flattening.",
+  "owner": "Ramesh-Mokkapati",
+  "asset": "{repo}-{tag}-x64.zip",
+  "exclude": [ "**/*.pdb", "**/*.ilk", "**/*.exp", "**/*.lib", "**/*.iobj", "**/*.ipdb" ],
+  "components": [
+    {
+      "id": "AppFramework",
+      "repo": "Application-Framework",
+      "files": [
+        { "from": "bin/*", "to": "" },
+        { "from": "README.md", "to": "" }
+      ]
+    },
+    {
+      "id": "AzureIoT",
+      "repo": "Azure-IoT-SDK-CPP",
+      "files": [
+        { "from": "*.exe", "to": "" },
+        { "from": "*.dll", "to": "", "optional": true }
+      ]
+    },
+    {
+      "id": "DiskForge",
+      "repo": "DiskForge",
+      "files": [
+        { "from": "DiskForge.exe", "to": "" }
+      ]
+    },
+    {
+      "id": "Localisation",
+      "repo": "Localisation",
+      "files": [
+        { "from": "CommandLine.exe", "to": "" },
+        { "from": "DialogApp.exe", "to": "" },
+        { "from": "SDIApp.exe", "to": "" },
+        { "from": "EnglishDLL.dll", "to": "" },
+        { "from": "FrenchDLL.dll", "to": "" },
+        { "from": "GermanDLL.dll", "to": "" }
+      ]
+    },
+    {
+      "id": "Messaging",
+      "repo": "Messaging",
+      "files": [
+        { "from": "**/*", "to": "", "keepTree": true }
+      ]
+    },
+    {
+      "id": "MfcSqLite",
+      "repo": "MfcSqLite",
+      "files": [
+        { "from": "MfcSqliteApp.exe", "to": "" }
+      ]
+    },
+    {
+      "id": "Porting",
+      "repo": "Porting",
+      "files": [
+        { "from": "x86/*", "to": "x86/" },
+        { "from": "x64/*", "to": "x64/" }
+      ]
+    },
+    {
+      "id": "UpdateManagers",
+      "repo": "UpdateManagers",
+      "files": [
+        { "from": "UpdateManager-Push.exe", "to": "" },
+        { "from": "UpdateManager-Pull.exe", "to": "" }
+      ]
+    }
+  ]
+}
