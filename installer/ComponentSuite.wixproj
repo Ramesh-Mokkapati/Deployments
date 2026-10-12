@@ -2,8 +2,9 @@
   <!--
     Builds the MSI from the files Fetch-Artifacts.ps1 staged in out\staging\.
       dotnet build installer\ComponentSuite.wixproj -c Release -p:ProductVersion=1.2.3
-    Product name / manufacturer can be overridden the same way:
-      -p:ProductName="My Tools" -p:Manufacturer="My Company"
+    Product name / manufacturer / folder name can be overridden the same way:
+      -p:ProductName="My Tools" -p:Manufacturer="My Company" -p:InstallFolderName="MyTools"
+    InstallFolderName is both C:\Program Files\<name>\ and the shortcut folder on the desktop.
     A component folder that isn't staged (fetched with -AllowMissing) drops its feature.
   -->
   <PropertyGroup>
@@ -14,11 +15,12 @@
     <SuppressIces>ICE38;ICE43;ICE57</SuppressIces>
     <ProductName Condition="'$(ProductName)' == ''">Component Suite</ProductName>
     <Manufacturer Condition="'$(Manufacturer)' == ''">Ramesh Mokkapati</Manufacturer>
+    <InstallFolderName Condition="'$(InstallFolderName)' == ''">MyComponentSuite</InstallFolderName>
     <ProductVersion Condition="'$(ProductVersion)' == ''">1.0.0</ProductVersion>
     <StagingDir Condition="'$(StagingDir)' == ''">$(MSBuildThisFileDirectory)..\out\staging</StagingDir>
     <StagingDir>$([System.IO.Path]::GetFullPath('$(StagingDir)'))</StagingDir>
     <StagingDir>$([MSBuild]::EnsureTrailingSlash('$(StagingDir)'))</StagingDir>
-    <DefineConstants>$(DefineConstants);ProductName=$(ProductName);Manufacturer=$(Manufacturer);ProductVersion=$(ProductVersion);StagingDir=$(StagingDir)</DefineConstants>
+    <DefineConstants>$(DefineConstants);ProductName=$(ProductName);Manufacturer=$(Manufacturer);InstallFolderName=$(InstallFolderName);ProductVersion=$(ProductVersion);StagingDir=$(StagingDir)</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

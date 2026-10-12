@@ -35,22 +35,25 @@
     <Launch Condition="Installed OR VCRT_X64 = &quot;#1&quot;"
             Message="[ProductName] requires the Microsoft Visual C++ 2015-2022 Redistributable (x64). Install it from https://aka.ms/vs/17/release/vc_redist.x64.exe and run this setup again." />
 
+    <!-- C:\Program Files\<InstallFolderName>\ (the user can still change it in setup). -->
     <StandardDirectory Id="ProgramFiles64Folder">
-      <Directory Id="ManufacturerDir" Name="$(Manufacturer)">
-        <Directory Id="INSTALLFOLDER" Name="$(ProductName)">
-          <Directory Id="AppFrameworkDir" Name="Application-Framework" />
-          <Directory Id="AzureIoTDir" Name="Azure-IoT-Samples" />
-          <Directory Id="DiskForgeDir" Name="DiskForge" />
-          <Directory Id="LocalisationDir" Name="Localisation" />
-          <Directory Id="MessagingDir" Name="Messaging" />
-          <Directory Id="MfcSqLiteDir" Name="MfcSqLite" />
-          <Directory Id="PortingDir" Name="Porting" />
-          <Directory Id="UpdateManagersDir" Name="UpdateManagers" />
-        </Directory>
+      <Directory Id="INSTALLFOLDER" Name="$(InstallFolderName)">
+        <Directory Id="AppFrameworkDir" Name="Application-Framework" />
+        <Directory Id="AzureIoTDir" Name="Azure-IoT-Samples" />
+        <Directory Id="DiskForgeDir" Name="DiskForge" />
+        <Directory Id="LocalisationDir" Name="Localisation" />
+        <Directory Id="MessagingDir" Name="Messaging" />
+        <Directory Id="MfcSqLiteDir" Name="MfcSqLite" />
+        <Directory Id="PortingDir" Name="Porting" />
+        <Directory Id="UpdateManagersDir" Name="UpdateManagers" />
       </Directory>
     </StandardDirectory>
     <StandardDirectory Id="ProgramMenuFolder">
       <Directory Id="ProgramMenuDir" Name="$(ProductName)" />
+    </StandardDirectory>
+    <!-- Per-machine install, so this is the Public desktop: every user sees the folder. -->
+    <StandardDirectory Id="DesktopFolder">
+      <Directory Id="DesktopShortcutsDir" Name="$(InstallFolderName)" />
     </StandardDirectory>
 
     <Feature Id="Complete" Title="$(ProductName)" Description="All components."
@@ -62,6 +65,7 @@
       </Component>
       <Component Id="ProgramMenuDirCleanup" Directory="ProgramMenuDir" Guid="81E8D0E8-BBCA-4759-A6EB-EAA11E84BA38">
         <RemoveFolder Id="RemoveProgramMenuDir" On="uninstall" />
+        <RemoveFolder Id="RemoveDesktopShortcutsDir" Directory="DesktopShortcutsDir" On="uninstall" />
         <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)" Name="InstallDir"
                        Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
       </Component>
@@ -85,6 +89,7 @@
         <Files Include="$(StagingDir)DiskForge\**" Directory="DiskForgeDir" />
         <Component Directory="ProgramMenuDir">
           <Shortcut Id="DiskForgeShortcut" Name="DiskForge" Target="[DiskForgeDir]DiskForge.exe" WorkingDirectory="DiskForgeDir" />
+          <Shortcut Id="DiskForgeDesktopShortcut" Directory="DesktopShortcutsDir" Name="DiskForge" Target="[DiskForgeDir]DiskForge.exe" WorkingDirectory="DiskForgeDir" />
           <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="DiskForge" Type="integer" Value="1" KeyPath="yes" />
         </Component>
       </Feature>
@@ -95,7 +100,9 @@
         <Files Include="$(StagingDir)Localisation\**" Directory="LocalisationDir" />
         <Component Directory="ProgramMenuDir">
           <Shortcut Id="SDIAppShortcut" Name="Localisation SDI App" Target="[LocalisationDir]SDIApp.exe" WorkingDirectory="LocalisationDir" />
+          <Shortcut Id="SDIAppDesktopShortcut" Directory="DesktopShortcutsDir" Name="Localisation SDI App" Target="[LocalisationDir]SDIApp.exe" WorkingDirectory="LocalisationDir" />
           <Shortcut Id="DialogAppShortcut" Name="Localisation Dialog App" Target="[LocalisationDir]DialogApp.exe" WorkingDirectory="LocalisationDir" />
+          <Shortcut Id="DialogAppDesktopShortcut" Directory="DesktopShortcutsDir" Name="Localisation Dialog App" Target="[LocalisationDir]DialogApp.exe" WorkingDirectory="LocalisationDir" />
           <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="Localisation" Type="integer" Value="1" KeyPath="yes" />
         </Component>
       </Feature>
@@ -114,6 +121,7 @@
         <ComponentRef Id="MfcSqLiteWritable" />
         <Component Directory="ProgramMenuDir">
           <Shortcut Id="MfcSqLiteShortcut" Name="MFC SQLite Demo" Target="[MfcSqLiteDir]MfcSqliteApp.exe" WorkingDirectory="MfcSqLiteDir" />
+          <Shortcut Id="MfcSqLiteDesktopShortcut" Directory="DesktopShortcutsDir" Name="MFC SQLite Demo" Target="[MfcSqLiteDir]MfcSqliteApp.exe" WorkingDirectory="MfcSqLiteDir" />
           <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="MfcSqLite" Type="integer" Value="1" KeyPath="yes" />
         </Component>
       </Feature>
@@ -124,7 +132,9 @@
         <Files Include="$(StagingDir)Porting\**" Directory="PortingDir" />
         <Component Directory="ProgramMenuDir">
           <Shortcut Id="PortAssistShortcut" Name="PortAssist" Target="[PortingDir]x64\PortAssist.exe" WorkingDirectory="PortingDir" />
+          <Shortcut Id="PortAssistDesktopShortcut" Directory="DesktopShortcutsDir" Name="PortAssist" Target="[PortingDir]x64\PortAssist.exe" WorkingDirectory="PortingDir" />
           <Shortcut Id="GenieShortcut" Name="Genie" Target="[PortingDir]x86\Genie.exe" WorkingDirectory="PortingDir" />
+          <Shortcut Id="GenieDesktopShortcut" Directory="DesktopShortcutsDir" Name="Genie" Target="[PortingDir]x86\Genie.exe" WorkingDirectory="PortingDir" />
           <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="Porting" Type="integer" Value="1" KeyPath="yes" />
         </Component>
       </Feature>

@@ -19,7 +19,7 @@ Every component repo publishes a release zip named `<Repo>-<tag>-x64.zip` when a
 | Porting tools | [Porting](https://github.com/Ramesh-Mokkapati/Porting) | `x86\*` (32-bit COM bridge + Genie), `x64\*` (ClientModified, PortAssist) | `Porting\` |
 | Update Managers | [UpdateManagers](https://github.com/Ramesh-Mokkapati/UpdateManagers) | Push/Pull exes | `UpdateManagers\` |
 
-Everything installs under `C:\Program Files\Ramesh Mokkapati\Component Suite\`. During setup the user can choose which features to install and where.
+Everything installs under `C:\Program Files\MyComponentSuite\`, with a `MyComponentSuite` shortcut folder on the desktop. During setup the user can choose which features to install and where. The folder name comes from the `InstallFolderName` build property (see [Building locally](#building-locally)).
 
 Each repo's **latest release** is used. That is GitHub's "latest", which skips drafts and pre-releases (tags like `v1.2.0-rc1`). To pin a component to a specific version, add `"tag": "v1.2.0"` to its entry in `artifacts.json`. Release assets never expire. `.pdb`, `.lib`, `.exp` and `.ilk` files are never packaged.
 
@@ -82,14 +82,14 @@ No token is needed. If you hit GitHub's anonymous API rate limit (60 requests an
 | `-AllowMissing` | Leave out components that have no release instead of failing. |
 | `-SkipFetch` | Build from `out\staging\` exactly as it is. |
 
-Override the product name or manufacturer with `dotnet build installer\ComponentSuite.wixproj -p:ProductName="..." -p:Manufacturer="..."`.
+Override the product name, manufacturer or folder name with `dotnet build installer\ComponentSuite.wixproj -p:ProductName="..." -p:Manufacturer="..." -p:InstallFolderName="..."`. `InstallFolderName` (default `MyComponentSuite`) is used for both `C:\Program Files\<name>\` and the desktop shortcut folder.
 
 ## What the MSI does
 
 * **Prerequisites:** setup stops if the Microsoft Visual C++ 2015-2022 Redistributable (x64) is missing. Selecting *Porting tools* also requires the x86 redistributable, because those binaries are 32-bit.
 * **COM registration:** registers the Porting COM bridge (`COMServer.exe /RegServer` and `regsvr32 COMServerPS.dll`) on install, and unregisters it on uninstall.
 * **Write access:** grants *Users* modify rights on `Application-Framework\` and `MfcSqLite\`, because FeatureTour writes its log and MfcSqliteApp its database next to the exe.
-* **Start menu:** adds shortcuts for DiskForge, MFC SQLite Demo, PortAssist, Genie and the Localisation SDI/Dialog apps.
+* **Shortcuts:** adds shortcuts for DiskForge, MFC SQLite Demo, PortAssist, Genie and the Localisation SDI/Dialog apps, both in the Start menu and in a `MyComponentSuite` folder on the Public desktop (visible to every user). Each appears only if its feature is installed, and both are removed on uninstall.
 * **Traceability:** installs `build-info.json`, which records the repo, release tag, commit and file list behind each component.
 * **Upgrades:** installing a newer version replaces the old one. Downgrades are blocked.
 
