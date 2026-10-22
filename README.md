@@ -89,6 +89,8 @@ To rebuild the MSI automatically whenever a component publishes a release, add a
 
 The pipeline fails if a component has no published release, or its release has no `<Repo>-<tag>-x64.zip`. This keeps an MSI from shipping without a component nobody noticed was missing. To build anyway, start this workflow manually with `allow_missing` ticked: the missing feature is left out and named in the run summary.
 
+A component whose repo hasn't published its first release yet can set `"allowUnreleased": true` in `artifacts.json`. While it has no release at all, it's left out of the MSI without failing the build. It's listed under **Not released yet** in the run summary and release notes, and the release is still a normal (not pre-) release. Its first release is picked up automatically, including by the daily check. A release missing the expected zip, or a pinned `tag` that doesn't exist, still fails. DefragLens, Find-Files, MemPurge, RBTrayPlusPlus, RecoverAside, UpdateInspector and WipeTrace currently use this.
+
 ## Building locally
 
 You need Windows and the .NET SDK 6 or later. WiX is restored from NuGet automatically.

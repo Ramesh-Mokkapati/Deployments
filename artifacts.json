@@ -1,5 +1,5 @@
 {
-  "$comment": "Which GitHub Release asset to take from each repo, and where its files land under out/staging/<id>/. By default the repo's latest release (drafts and pre-releases excluded) is used; set 'tag' on a component to pin it, e.g. \"tag\": \"v1.2.0\". 'asset' is the zip name, with {repo}, {tag} and {version} (the tag without its leading 'v') filled in; a component can set its own 'asset' when its zip is named differently. In 'files', 'from' is a glob relative to the zip root (* = one path segment, ** = any depth); 'to' ending in '/' (or empty) is a folder, otherwise the single match is renamed to that file name; 'keepTree' keeps the sub-path below the glob's fixed prefix instead of flattening.",
+  "$comment": "Which GitHub Release asset to take from each repo, and where its files land under out/staging/<id>/. By default the repo's latest release (drafts and pre-releases excluded) is used; set 'tag' on a component to pin it, e.g. \"tag\": \"v1.2.0\". 'asset' is the zip name, with {repo}, {tag} and {version} (the tag without its leading 'v') filled in; a component can set its own 'asset' when its zip is named differently. In 'files', 'from' is a glob relative to the zip root (* = one path segment, ** = any depth); 'to' ending in '/' (or empty) is a folder, otherwise the single match is renamed to that file name; 'keepTree' keeps the sub-path below the glob's fixed prefix instead of flattening. 'allowUnreleased': true skips a component whose repo has no release yet, instead of failing the build; it is packaged automatically from its first release on.",
   "owner": "Ramesh-Mokkapati",
   "asset": "{repo}-{tag}-x64.zip",
   "exclude": [ "**/*.pdb", "**/*.ilk", "**/*.exp", "**/*.lib", "**/*.iobj", "**/*.ipdb" ],
@@ -23,6 +23,7 @@
     {
       "id": "DefragLens",
       "repo": "DefragLens",
+      "allowUnreleased": true,
       "asset": "{repo}-{tag}.zip",
       "files": [
         { "from": "x64/DefragLens.exe", "to": "" },
@@ -46,6 +47,7 @@
     {
       "id": "FindFiles",
       "repo": "Find-Files",
+      "allowUnreleased": true,
       "asset": "FindFiles-{version}-x64.zip",
       "files": [
         { "from": "FindFiles.exe", "to": "" }
@@ -66,6 +68,7 @@
     {
       "id": "MemPurge",
       "repo": "MemPurge",
+      "allowUnreleased": true,
       "files": [
         { "from": "MemPurge.exe", "to": "" }
       ]
@@ -95,6 +98,7 @@
     {
       "id": "RBTray",
       "repo": "RBTrayPlusPlus",
+      "allowUnreleased": true,
       "asset": "RBTray++-{version}-x64.zip",
       "files": [
         { "from": "RBTray++.exe", "to": "" },
@@ -104,6 +108,7 @@
     {
       "id": "RecoverAside",
       "repo": "RecoverAside",
+      "allowUnreleased": true,
       "asset": "{repo}-{version}-x64.zip",
       "files": [
         { "from": "RecoverAside.exe", "to": "" }
@@ -126,6 +131,7 @@
     {
       "id": "UpdateInspector",
       "repo": "UpdateInspector",
+      "allowUnreleased": true,
       "files": [
         { "from": "UpdateInspector.exe", "to": "" }
       ]
@@ -141,6 +147,7 @@
     {
       "id": "WipeTrace",
       "repo": "WipeTrace",
+      "allowUnreleased": true,
       "asset": "{repo}-{version}-x64.zip",
       "files": [
         { "from": "WipeTrace.exe", "to": "" }

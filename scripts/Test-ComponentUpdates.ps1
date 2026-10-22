@@ -63,9 +63,11 @@ foreach ($c in $cfg.components) {
         if ($rel) { $rel.tag_name } else { $null }
     }
     $had = if ($inMsi.ContainsKey($c.id)) { $inMsi[$c.id] } else { $null }
-    $same = $current -and $had -and ($current -eq $had)
+    # An allowUnreleased component that still has no release is left out of every build, so it is no change.
+    $waiting = -not $current -and -not $had -and $c.PSObject.Properties['allowUnreleased'] -and $c.allowUnreleased
+    $same = $waiting -or ($current -and $had -and ($current -eq $had))
     if (-not $same) { $changes += $c.id }
-    $table += "| $($c.id) | $(if ($had) { $had } else { '-' }) | $(if ($current) { $current } else { 'none' })$(if ($pinned) { ' (pinned)' }) | $(if ($same) { '' } else { 'changed' }) |"
+    $table += "| $($c.id) | $(if ($had) { $had } else { '-' }) | $(if ($current) { $current } else { 'none' })$(if ($pinned) { ' (pinned)' }) | $(if ($waiting) { 'not released yet' } elseif ($same) { '' } else { 'changed' }) |"
 }
 $table | ForEach-Object { Write-Host $_ }
 

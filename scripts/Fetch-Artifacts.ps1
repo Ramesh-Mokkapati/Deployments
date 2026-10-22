@@ -135,6 +135,7 @@ New-Item -ItemType Directory -Force $staging, $downloads | Out-Null
 $excludes  = @($cfg.exclude | ForEach-Object { ConvertTo-GlobRegex $_ })
 $buildInfo = [ordered]@{ generated = (Get-Date).ToUniversalTime().ToString('o'); components = [ordered]@{} }
 $missing   = @()
+$notReleased = @()
 
 foreach ($c in $selected) {
     $pinned = if ($c.PSObject.Properties['tag'] -and $c.tag) { $c.tag } else { $null }
@@ -159,7 +160,14 @@ foreach ($c in $selected) {
             $asset = @($rel.assets | Where-Object { $_.name -eq $assetName }) | Select-Object -First 1
         }
         if (-not $asset) {
-            $msg = if (-not $rel) { "$($c.repo) has no $(if ($pinned) { "release tagged $pinned" } else { 'published (non-pre-release) release' }). Push a v*.*.* tag there." }
+            # A repo that has never released is skipped when its entry opts in with allowUnreleased;
+            # a release without the expected zip, or a missing pinned tag, still fails.
+            $allowUnreleased = $c.PSObject.Properties['allowUnreleased'] -and $c.allowUnreleased
+            if (-not $rel -and -not $pinned -and $allowUnreleased) {
+                Write-Warning "  $($c.repo) has no release yet - skipping (allowUnreleased)."
+                $notReleased += $c.id; continue
+            }
+            $msg =if (-not $rel) { "$($c.repo) has no $(if ($pinned) { "release tagged $pinned" } else { 'published (non-pre-release) release' }). Push a v*.*.* tag there." }
                    else { "$($c.repo) release $($rel.tag_name) has no asset '$assetName' (has: $(@($rel.assets.name) -join ', '))." }
             if ($AllowMissing) { Write-Warning "  $msg Skipping."; $missing += $c.id; continue }
             throw $msg
@@ -221,6 +229,8 @@ foreach ($c in $selected) {
 }
 
 if ($missing) { $buildInfo.missing = $missing }
+if ($notReleased) { $buildInfo.notReleased = $notReleased }
 $buildInfo | ConvertTo-Json -Depth 6 | Set-Content (Join-Path $staging 'build-info.json') -Encoding UTF8
 Write-Host "Staging ready: $staging"
 if ($missing) { Write-Warning "Left out: $($missing -join ', ')" }
+if ($notReleased) { Write-Warning "Not released yet, left out: $($notReleased -join ', ')" }

@@ -114,6 +114,8 @@ jobs:
           }
           $missing = $info.PSObject.Properties['missing'] -and $info.missing
           if ($missing) { $lines += '', "**Left out:** $($info.missing -join ', ')" }
+          # allowUnreleased components with no release yet: expected, so not a pre-release.
+          if ($info.PSObject.Properties['notReleased'] -and $info.notReleased) { $lines += '', "**Not released yet:** $($info.notReleased -join ', ')" }
           $lines -join "`n" >> $env:GITHUB_STEP_SUMMARY
           $lines -join "`n" | Set-Content out/release-notes.md -Encoding utf8
           "missing=$(if ($missing) { 'true' } else { 'false' })" >> $env:GITHUB_OUTPUT
