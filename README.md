@@ -6,22 +6,32 @@ There's no source code to compile here. The pipeline downloads the latest **GitH
 
 ## Components
 
-Every component repo publishes a release zip named `<Repo>-<tag>-x64.zip` when a `v*.*.*` tag is pushed.
+Every component repo publishes a release zip when a `v*.*.*` tag is pushed. Most are named `<Repo>-<tag>-x64.zip`; the rest set their own `asset` name in `artifacts.json` (shown below).
 
 | Feature | Repository | Taken from the release zip | Installed to |
 |---|---|---|---|
 | Application Framework | [Application-Framework](https://github.com/Ramesh-Mokkapati/Application-Framework) | `bin/*`, `README.md` | `Application-Framework\` |
 | Azure IoT samples | [Azure-IoT-SDK-CPP](https://github.com/Ramesh-Mokkapati/Azure-IoT-SDK-CPP) | sample exes + Azure SDK DLLs | `Azure-IoT-Samples\` |
+| DefragLens | [DefragLens](https://github.com/Ramesh-Mokkapati/DefragLens) | `x64/DefragLens.exe`, `x64/DefragLensBoot.exe` from `DefragLens-<tag>.zip` | `DefragLens\` |
 | DiskForge | [DiskForge](https://github.com/Ramesh-Mokkapati/DiskForge) | `DiskForge.exe` | `DiskForge\` |
+| File Unlocker | [FileUnlocker](https://github.com/Ramesh-Mokkapati/FileUnlocker) | `FileUnlocker.exe` | `FileUnlocker\` |
+| Find Files | [Find-Files](https://github.com/Ramesh-Mokkapati/Find-Files) | `FindFiles.exe` from `FindFiles-<version>-x64.zip` | `Find-Files\` |
 | Localisation | [Localisation](https://github.com/Ramesh-Mokkapati/Localisation) | 3 apps + English/French/German DLLs | `Localisation\` |
+| MemPurge | [MemPurge](https://github.com/Ramesh-Mokkapati/MemPurge) | `MemPurge.exe` | `MemPurge\` |
 | Messaging | [Messaging](https://github.com/Ramesh-Mokkapati/Messaging) | everything (apps, MQTT/RabbitMQ/OpenDDS DLLs, `rtps.ini`) | `Messaging\` |
 | MFC SQLite demo | [MfcSqLite](https://github.com/Ramesh-Mokkapati/MfcSqLite) | `MfcSqliteApp.exe` | `MfcSqLite\` |
 | Porting tools | [Porting](https://github.com/Ramesh-Mokkapati/Porting) | `x86\*` (32-bit COM bridge + Genie), `x64\*` (ClientModified, PortAssist) | `Porting\` |
+| RBTray++ | [RBTrayPlusPlus](https://github.com/Ramesh-Mokkapati/RBTrayPlusPlus) | `RBTray++.exe`, `RBHook.dll` from `RBTray++-<version>-x64.zip` | `RBTrayPlusPlus\` |
+| RecoverAside | [RecoverAside](https://github.com/Ramesh-Mokkapati/RecoverAside) | `RecoverAside.exe` from `RecoverAside-<version>-x64.zip` | `RecoverAside\` |
+| Registry Cleaner | [RegistryCleaner](https://github.com/Ramesh-Mokkapati/RegistryCleaner) | `RegistryCleaner.exe` | `RegistryCleaner\` |
+| Startup Manager | [StartupManager](https://github.com/Ramesh-Mokkapati/StartupManager) | `StartupManager.exe` | `StartupManager\` |
+| Update Inspector | [UpdateInspector](https://github.com/Ramesh-Mokkapati/UpdateInspector) | `UpdateInspector.exe` | `UpdateInspector\` |
 | Update Managers | [UpdateManagers](https://github.com/Ramesh-Mokkapati/UpdateManagers) | Push/Pull exes | `UpdateManagers\` |
+| WipeTrace | [WipeTrace](https://github.com/Ramesh-Mokkapati/WipeTrace) | `WipeTrace.exe` from `WipeTrace-<version>-x64.zip` | `WipeTrace\` |
 
 Everything installs under `C:\Program Files\MyComponentSuite\`, with a `MyComponentSuite` shortcut folder on the desktop. During setup the user can choose which features to install and where. The folder name comes from the `InstallFolderName` build property (see [Building locally](#building-locally)).
 
-Each repo's **latest release** is used. That is GitHub's "latest", which skips drafts and pre-releases (tags like `v1.2.0-rc1`). To pin a component to a specific version, add `"tag": "v1.2.0"` to its entry in `artifacts.json`. Release assets never expire. `.pdb`, `.lib`, `.exp` and `.ilk` files are never packaged.
+Each repo's **latest release** is used. That is GitHub's "latest", which skips drafts and pre-releases (tags like `v1.2.0-rc1`). To pin a component to a specific version, add `"tag": "v1.2.0"` to its entry in `artifacts.json`. `<version>` above is the tag without its leading `v`. Release assets never expire. `.pdb`, `.lib`, `.exp` and `.ilk` files are never packaged.
 
 ## Repository layout
 
@@ -102,13 +112,13 @@ Override the product name, manufacturer or folder name with `dotnet build instal
 * **Prerequisites:** setup stops if the Microsoft Visual C++ 2015-2022 Redistributable (x64) is missing. Selecting *Porting tools* also requires the x86 redistributable, because those binaries are 32-bit.
 * **COM registration:** registers the Porting COM bridge (`COMServer.exe /RegServer` and `regsvr32 COMServerPS.dll`) on install, and unregisters it on uninstall.
 * **Write access:** grants *Users* modify rights on `Application-Framework\` and `MfcSqLite\`, because FeatureTour writes its log and MfcSqliteApp its database next to the exe.
-* **Shortcuts:** adds shortcuts for DiskForge, MFC SQLite Demo, PortAssist, Genie and the Localisation SDI/Dialog apps, both in the Start menu and in a `MyComponentSuite` folder on the Public desktop (visible to every user). Each appears only if its feature is installed, and both are removed on uninstall.
+* **Shortcuts:** adds shortcuts for DefragLens, DiskForge, File Unlocker, Find Files, MemPurge, MFC SQLite Demo, PortAssist, Genie, RBTray++, RecoverAside, Registry Cleaner, Startup Manager, Update Inspector, WipeTrace and the Localisation SDI/Dialog apps, both in the Start menu and in a `MyComponentSuite` folder on the Public desktop (visible to every user). Each appears only if its feature is installed, and both are removed on uninstall.
 * **Traceability:** installs `build-info.json`, which records the repo, release tag, commit and file list behind each component.
 * **Upgrades:** installing a newer version replaces the old one. Downgrades are blocked.
 
 ## Adding a component
 
 1. Give the new repo a release job that publishes `<Repo>-<tag>-x64.zip` on `v*.*.*` tags (copy one from an existing component), and tag a release.
-2. Add an entry to `artifacts.json`. In `from`, `*` matches one path segment and `**` any depth. A `to` that is empty or ends in `/` is a folder; anything else renames the single matching file.
+2. Add an entry to `artifacts.json`. If the zip is named differently, set `asset` on the entry, e.g. `"asset": "{repo}-{version}-x64.zip"` (`{tag}` = `v1.2.3`, `{version}` = `1.2.3`). In `from`, `*` matches one path segment and `**` any depth. A `to` that is empty or ends in `/` is a folder; anything else renames the single matching file.
 3. Add its id to `StagedComponent` in `installer/ComponentSuite.wixproj`.
 4. In `installer/Package.wxs`, add a `<Directory>` under `INSTALLFOLDER` and an `<?ifdef Has<Id> ?>` feature using `<Files Include="$(StagingDir)<Id>\**" .../>`.

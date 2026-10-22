@@ -40,12 +40,22 @@
       <Directory Id="INSTALLFOLDER" Name="$(InstallFolderName)">
         <Directory Id="AppFrameworkDir" Name="Application-Framework" />
         <Directory Id="AzureIoTDir" Name="Azure-IoT-Samples" />
+        <Directory Id="DefragLensDir" Name="DefragLens" />
         <Directory Id="DiskForgeDir" Name="DiskForge" />
+        <Directory Id="FileUnlockerDir" Name="FileUnlocker" />
+        <Directory Id="FindFilesDir" Name="Find-Files" />
         <Directory Id="LocalisationDir" Name="Localisation" />
+        <Directory Id="MemPurgeDir" Name="MemPurge" />
         <Directory Id="MessagingDir" Name="Messaging" />
         <Directory Id="MfcSqLiteDir" Name="MfcSqLite" />
         <Directory Id="PortingDir" Name="Porting" />
+        <Directory Id="RBTrayDir" Name="RBTrayPlusPlus" />
+        <Directory Id="RecoverAsideDir" Name="RecoverAside" />
+        <Directory Id="RegistryCleanerDir" Name="RegistryCleaner" />
+        <Directory Id="StartupManagerDir" Name="StartupManager" />
+        <Directory Id="UpdateInspectorDir" Name="UpdateInspector" />
         <Directory Id="UpdateManagersDir" Name="UpdateManagers" />
+        <Directory Id="WipeTraceDir" Name="WipeTrace" />
       </Directory>
     </StandardDirectory>
     <StandardDirectory Id="ProgramMenuFolder">
@@ -84,6 +94,17 @@
       </Feature>
 <?endif?>
 
+<?ifdef HasDefragLens ?>
+      <Feature Id="FeatureDefragLens" Title="DefragLens" Description="Disk defragmenter with a live cluster map and boot-file optimisation.">
+        <Files Include="$(StagingDir)DefragLens\**" Directory="DefragLensDir" />
+        <Component Directory="ProgramMenuDir">
+          <Shortcut Id="DefragLensShortcut" Name="DefragLens" Target="[DefragLensDir]DefragLens.exe" WorkingDirectory="DefragLensDir" />
+          <Shortcut Id="DefragLensDesktopShortcut" Directory="DesktopShortcutsDir" Name="DefragLens" Target="[DefragLensDir]DefragLens.exe" WorkingDirectory="DefragLensDir" />
+          <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="DefragLens" Type="integer" Value="1" KeyPath="yes" />
+        </Component>
+      </Feature>
+<?endif?>
+
 <?ifdef HasDiskForge ?>
       <Feature Id="FeatureDiskForge" Title="DiskForge" Description="Disk utility.">
         <Files Include="$(StagingDir)DiskForge\**" Directory="DiskForgeDir" />
@@ -91,6 +112,28 @@
           <Shortcut Id="DiskForgeShortcut" Name="DiskForge" Target="[DiskForgeDir]DiskForge.exe" WorkingDirectory="DiskForgeDir" />
           <Shortcut Id="DiskForgeDesktopShortcut" Directory="DesktopShortcutsDir" Name="DiskForge" Target="[DiskForgeDir]DiskForge.exe" WorkingDirectory="DiskForgeDir" />
           <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="DiskForge" Type="integer" Value="1" KeyPath="yes" />
+        </Component>
+      </Feature>
+<?endif?>
+
+<?ifdef HasFileUnlocker ?>
+      <Feature Id="FeatureFileUnlocker" Title="File Unlocker" Description="Finds and releases the processes locking a file or folder.">
+        <Files Include="$(StagingDir)FileUnlocker\**" Directory="FileUnlockerDir" />
+        <Component Directory="ProgramMenuDir">
+          <Shortcut Id="FileUnlockerShortcut" Name="File Unlocker" Target="[FileUnlockerDir]FileUnlocker.exe" WorkingDirectory="FileUnlockerDir" />
+          <Shortcut Id="FileUnlockerDesktopShortcut" Directory="DesktopShortcutsDir" Name="File Unlocker" Target="[FileUnlockerDir]FileUnlocker.exe" WorkingDirectory="FileUnlockerDir" />
+          <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="FileUnlocker" Type="integer" Value="1" KeyPath="yes" />
+        </Component>
+      </Feature>
+<?endif?>
+
+<?ifdef HasFindFiles ?>
+      <Feature Id="FeatureFindFiles" Title="Find Files" Description="File search and duplicate-file cleanup in the style of the classic Windows Find dialog.">
+        <Files Include="$(StagingDir)FindFiles\**" Directory="FindFilesDir" />
+        <Component Directory="ProgramMenuDir">
+          <Shortcut Id="FindFilesShortcut" Name="Find Files" Target="[FindFilesDir]FindFiles.exe" WorkingDirectory="FindFilesDir" />
+          <Shortcut Id="FindFilesDesktopShortcut" Directory="DesktopShortcutsDir" Name="Find Files" Target="[FindFilesDir]FindFiles.exe" WorkingDirectory="FindFilesDir" />
+          <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="FindFiles" Type="integer" Value="1" KeyPath="yes" />
         </Component>
       </Feature>
 <?endif?>
@@ -104,6 +147,17 @@
           <Shortcut Id="DialogAppShortcut" Name="Localisation Dialog App" Target="[LocalisationDir]DialogApp.exe" WorkingDirectory="LocalisationDir" />
           <Shortcut Id="DialogAppDesktopShortcut" Directory="DesktopShortcutsDir" Name="Localisation Dialog App" Target="[LocalisationDir]DialogApp.exe" WorkingDirectory="LocalisationDir" />
           <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="Localisation" Type="integer" Value="1" KeyPath="yes" />
+        </Component>
+      </Feature>
+<?endif?>
+
+<?ifdef HasMemPurge ?>
+      <Feature Id="FeatureMemPurge" Title="MemPurge" Description="Tray utility that frees RAM on demand or automatically.">
+        <Files Include="$(StagingDir)MemPurge\**" Directory="MemPurgeDir" />
+        <Component Directory="ProgramMenuDir">
+          <Shortcut Id="MemPurgeShortcut" Name="MemPurge" Target="[MemPurgeDir]MemPurge.exe" WorkingDirectory="MemPurgeDir" />
+          <Shortcut Id="MemPurgeDesktopShortcut" Directory="DesktopShortcutsDir" Name="MemPurge" Target="[MemPurgeDir]MemPurge.exe" WorkingDirectory="MemPurgeDir" />
+          <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="MemPurge" Type="integer" Value="1" KeyPath="yes" />
         </Component>
       </Feature>
 <?endif?>
@@ -140,9 +194,75 @@
       </Feature>
 <?endif?>
 
+<?ifdef HasRBTray ?>
+      <Feature Id="FeatureRBTray" Title="RBTray++" Description="Minimizes any window to the notification area instead of the taskbar.">
+        <Files Include="$(StagingDir)RBTray\**" Directory="RBTrayDir" />
+        <Component Directory="ProgramMenuDir">
+          <Shortcut Id="RBTrayShortcut" Name="RBTray++" Target="[RBTrayDir]RBTray++.exe" WorkingDirectory="RBTrayDir" />
+          <Shortcut Id="RBTrayDesktopShortcut" Directory="DesktopShortcutsDir" Name="RBTray++" Target="[RBTrayDir]RBTray++.exe" WorkingDirectory="RBTrayDir" />
+          <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="RBTray" Type="integer" Value="1" KeyPath="yes" />
+        </Component>
+      </Feature>
+<?endif?>
+
+<?ifdef HasRecoverAside ?>
+      <Feature Id="FeatureRecoverAside" Title="RecoverAside" Description="Safe undelete utility.">
+        <Files Include="$(StagingDir)RecoverAside\**" Directory="RecoverAsideDir" />
+        <Component Directory="ProgramMenuDir">
+          <Shortcut Id="RecoverAsideShortcut" Name="RecoverAside" Target="[RecoverAsideDir]RecoverAside.exe" WorkingDirectory="RecoverAsideDir" />
+          <Shortcut Id="RecoverAsideDesktopShortcut" Directory="DesktopShortcutsDir" Name="RecoverAside" Target="[RecoverAsideDir]RecoverAside.exe" WorkingDirectory="RecoverAsideDir" />
+          <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="RecoverAside" Type="integer" Value="1" KeyPath="yes" />
+        </Component>
+      </Feature>
+<?endif?>
+
+<?ifdef HasRegistryCleaner ?>
+      <Feature Id="FeatureRegistryCleaner" Title="Registry Cleaner" Description="Finds and fixes invalid registry entries.">
+        <Files Include="$(StagingDir)RegistryCleaner\**" Directory="RegistryCleanerDir" />
+        <Component Directory="ProgramMenuDir">
+          <Shortcut Id="RegistryCleanerShortcut" Name="Registry Cleaner" Target="[RegistryCleanerDir]RegistryCleaner.exe" WorkingDirectory="RegistryCleanerDir" />
+          <Shortcut Id="RegistryCleanerDesktopShortcut" Directory="DesktopShortcutsDir" Name="Registry Cleaner" Target="[RegistryCleanerDir]RegistryCleaner.exe" WorkingDirectory="RegistryCleanerDir" />
+          <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="RegistryCleaner" Type="integer" Value="1" KeyPath="yes" />
+        </Component>
+      </Feature>
+<?endif?>
+
+<?ifdef HasStartupManager ?>
+      <Feature Id="FeatureStartupManager" Title="Startup Manager" Description="Enables, disables, adds and removes Run/RunOnce startup entries.">
+        <Files Include="$(StagingDir)StartupManager\**" Directory="StartupManagerDir" />
+        <Component Directory="ProgramMenuDir">
+          <Shortcut Id="StartupManagerShortcut" Name="Startup Manager" Target="[StartupManagerDir]StartupManager.exe" WorkingDirectory="StartupManagerDir" />
+          <Shortcut Id="StartupManagerDesktopShortcut" Directory="DesktopShortcutsDir" Name="Startup Manager" Target="[StartupManagerDir]StartupManager.exe" WorkingDirectory="StartupManagerDir" />
+          <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="StartupManager" Type="integer" Value="1" KeyPath="yes" />
+        </Component>
+      </Feature>
+<?endif?>
+
+<?ifdef HasUpdateInspector ?>
+      <Feature Id="FeatureUpdateInspector" Title="Update Inspector" Description="Identifies and optionally updates drivers and applications.">
+        <Files Include="$(StagingDir)UpdateInspector\**" Directory="UpdateInspectorDir" />
+        <Component Directory="ProgramMenuDir">
+          <Shortcut Id="UpdateInspectorShortcut" Name="Update Inspector" Target="[UpdateInspectorDir]UpdateInspector.exe" WorkingDirectory="UpdateInspectorDir" />
+          <Shortcut Id="UpdateInspectorDesktopShortcut" Directory="DesktopShortcutsDir" Name="Update Inspector" Target="[UpdateInspectorDir]UpdateInspector.exe" WorkingDirectory="UpdateInspectorDir" />
+          <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="UpdateInspector" Type="integer" Value="1" KeyPath="yes" />
+        </Component>
+      </Feature>
+<?endif?>
+
 <?ifdef HasUpdateManagers ?>
       <Feature Id="FeatureUpdateManagers" Title="Update Managers" Description="UpdateManager-Push and UpdateManager-Pull.">
         <Files Include="$(StagingDir)UpdateManagers\**" Directory="UpdateManagersDir" />
+      </Feature>
+<?endif?>
+
+<?ifdef HasWipeTrace ?>
+      <Feature Id="FeatureWipeTrace" Title="WipeTrace" Description="Secure deletion of files and folders.">
+        <Files Include="$(StagingDir)WipeTrace\**" Directory="WipeTraceDir" />
+        <Component Directory="ProgramMenuDir">
+          <Shortcut Id="WipeTraceShortcut" Name="WipeTrace" Target="[WipeTraceDir]WipeTrace.exe" WorkingDirectory="WipeTraceDir" />
+          <Shortcut Id="WipeTraceDesktopShortcut" Directory="DesktopShortcutsDir" Name="WipeTrace" Target="[WipeTraceDir]WipeTrace.exe" WorkingDirectory="WipeTraceDir" />
+          <RegistryValue Root="HKLM" Key="Software\$(Manufacturer)\$(ProductName)\Shortcuts" Name="WipeTrace" Type="integer" Value="1" KeyPath="yes" />
+        </Component>
       </Feature>
 <?endif?>
     </Feature>

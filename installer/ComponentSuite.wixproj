@@ -24,7 +24,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <StagedComponent Include="AppFramework;AzureIoT;DiskForge;Localisation;Messaging;MfcSqLite;Porting;UpdateManagers" />
+    <StagedComponent Include="AppFramework;AzureIoT;DefragLens;DiskForge;FileUnlocker;FindFiles;Localisation;MemPurge;Messaging;MfcSqLite;Porting;RBTray;RecoverAside;RegistryCleaner;StartupManager;UpdateInspector;UpdateManagers;WipeTrace" />
   </ItemGroup>
 
   <ItemGroup>

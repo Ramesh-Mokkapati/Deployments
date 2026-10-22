@@ -6,8 +6,8 @@
 .DESCRIPTION
     For every component, the repo's latest release (GitHub's "latest": drafts and
     pre-releases excluded) is used, unless the component pins a 'tag'. The release
-    asset named by the manifest's 'asset' pattern - e.g. DiskForge-v1.0.0-x64.zip -
-    is downloaded and unzipped, its files are mapped into the staging folder
+    asset named by the manifest's 'asset' pattern (or the component's own 'asset')
+    - e.g. DiskForge-v1.0.0-x64.zip - is downloaded and unzipped, its files are mapped into the staging folder
     according to the component's 'files' rules, and out\staging\build-info.json
     records exactly which release/tag/commit each component came from.
 
@@ -153,7 +153,9 @@ foreach ($c in $selected) {
         $rel = Get-Release $c.repo $pinned
         $asset = $null
         if ($rel) {
-            $assetName = $cfg.asset.Replace('{repo}', $c.repo).Replace('{tag}', $rel.tag_name)
+            # A component's own 'asset' overrides the manifest default. {version} is the tag without its leading 'v'.
+            $pattern   = if ($c.PSObject.Properties['asset'] -and $c.asset) { $c.asset } else { $cfg.asset }
+            $assetName = $pattern.Replace('{repo}', $c.repo).Replace('{tag}', $rel.tag_name).Replace('{version}', ($rel.tag_name -replace '^v', ''))
             $asset = @($rel.assets | Where-Object { $_.name -eq $assetName }) | Select-Object -First 1
         }
         if (-not $asset) {
